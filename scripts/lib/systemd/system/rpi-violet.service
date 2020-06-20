@@ -1,0 +1,14 @@
+[Unit]
+Description=RPI Violet
+After=syslog.target
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/rpi-violet run --config="/etc/rpi-violet.yaml"
+Restart=always
+RestartSec=5s
+Environment=
+
+[Install]
+WantedBy=multi-user.target

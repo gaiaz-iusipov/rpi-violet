@@ -1,0 +1,36 @@
+before:
+  hooks:
+    - go mod vendor
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - arm
+    goarm:
+      - 7
+    ldflags:
+      - -s -w
+      - -X github.com/gaiaz-iusipov/rpi-violet/commands.version={{.Version}}
+      - -X github.com/gaiaz-iusipov/rpi-violet/commands.commit={{.ShortCommit}}
+      - -X github.com/gaiaz-iusipov/rpi-violet/commands.date={{time "2006-01-02"}}
+archives:
+  - format: binary
+checksum:
+  name_template: 'checksums.txt'
+nfpms:
+  - id: nfpms
+    homepage: "https://github.com/gaiaz-iusipov/rpi-violet"
+    maintainer: Gaiaz Iusipov <g.iusipov@gmail.com>
+    description: PRI Violet.
+    license: MIT
+    formats:
+      - deb
+    dependencies:
+      - libraspberrypi-bin
+    bindir: /usr/bin
+    files:
+      "scripts/lib/systemd/system/**": "/lib/systemd/system"
+    config_files:
+      "config.dist.yaml": "/etc/rpi-violet.yaml"
