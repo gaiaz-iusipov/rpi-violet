@@ -17,7 +17,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
-	"github.com/stianeikeland/go-rpio"
+	"github.com/stianeikeland/go-rpio/v4"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -134,7 +134,7 @@ func makePicture(ctx context.Context) (*bytes.Reader, error) {
 		return nil, err
 	}
 
-	if ctx.Err() == context.DeadlineExceeded {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		return nil, errors.New("timed out")
 	}
 
