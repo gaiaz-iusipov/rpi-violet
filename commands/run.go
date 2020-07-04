@@ -34,13 +34,7 @@ func init() {
 }
 
 func runE(_ *cobra.Command, _ []string) error {
-	if err := rpio.Open(); err != nil {
-		return fmt.Errorf("unable to open gpio: %w", err)
-	}
-	defer rpio.Close()
-
 	pin := rpio.Pin(cfg.GPIOLightPin)
-	pin.Output()
 
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn: cfg.SentryDNS,
@@ -115,6 +109,12 @@ func (cj cronJob) Run() {
 }
 
 func (cj cronJob) runE() error {
+	if err := rpio.Open(); err != nil {
+		return fmt.Errorf("unable to open gpio: %w", err)
+	}
+	defer rpio.Close()
+
+	cj.pin.Output()
 	cj.pin.Write(cj.state)
 
 	reader, err := makePicture(context.Background())
