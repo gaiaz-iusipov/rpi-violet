@@ -12,18 +12,20 @@ import (
 )
 
 type config struct {
-	TelegramBotToken  string
-	TelegramChatID    int64
-	GPIOLightPin      uint8
-	RaspistillTimeout time.Duration
-	SentryDNS         string
-	SentryTimeout     time.Duration
-	DebugPort         string
+	TelegramBotToken      string
+	TelegramClientTimeout time.Duration
+	TelegramChatID        int64
+	GPIOLightPin          uint8
+	RaspistillTimeout     time.Duration
+	SentryDNS             string
+	SentryTimeout         time.Duration
+	DebugPort             string
 }
 
 func (c *config) validate() error {
 	return validation.ValidateStruct(c,
 		validation.Field(&c.TelegramBotToken, validation.Required),
+		validation.Field(&c.TelegramClientTimeout, validation.Required),
 		validation.Field(&c.TelegramChatID, validation.Required),
 		validation.Field(&c.GPIOLightPin, validation.Required),
 		validation.Field(&c.RaspistillTimeout, validation.Required),

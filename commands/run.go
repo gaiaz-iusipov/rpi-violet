@@ -50,8 +50,13 @@ func runE(_ *cobra.Command, _ []string) error {
 	}
 	defer sentry.Flush(cfg.SentryTimeout)
 
+	tgClient := &http.Client{
+		Timeout: cfg.TelegramClientTimeout,
+	}
+
 	bot, err := tb.NewBot(tb.Settings{
-		Token: cfg.TelegramBotToken,
+		Token:  cfg.TelegramBotToken,
+		Client: tgClient,
 	})
 	if err != nil {
 		return fmt.Errorf("tb.NewBot: %w", err)
