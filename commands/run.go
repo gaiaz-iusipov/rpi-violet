@@ -25,7 +25,7 @@ var runCmd = &cobra.Command{
 	Use:     "run",
 	Short:   "Run application",
 	PreRunE: initConfig,
-	Run:     run,
+	RunE:    runE,
 }
 
 func init() {
@@ -33,9 +33,9 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 }
 
-func run(_ *cobra.Command, _ []string) {
+func runE(_ *cobra.Command, _ []string) error {
 	if err := rpio.Open(); err != nil {
-		log.Fatalf("unable to open gpio: %s", err)
+		return fmt.Errorf("unable to open gpio: %w", err)
 	}
 	defer rpio.Close()
 
@@ -46,7 +46,7 @@ func run(_ *cobra.Command, _ []string) {
 		Dsn: cfg.SentryDNS,
 	})
 	if err != nil {
-		log.Fatalf("sentry.Init: %s", err)
+		return fmt.Errorf("sentry.Init: %w", err)
 	}
 	defer sentry.Flush(cfg.SentryTimeout)
 
@@ -54,7 +54,7 @@ func run(_ *cobra.Command, _ []string) {
 		Token: cfg.TelegramBotToken,
 	})
 	if err != nil {
-		log.Fatalf("tb.NewBot: %s", err)
+		return fmt.Errorf("tb.NewBot: %w", err)
 	}
 
 	chat := &tb.Chat{ID: cfg.TelegramChatID}
@@ -70,7 +70,7 @@ func run(_ *cobra.Command, _ []string) {
 		tgChat: chat,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	_, err = c.AddJob("0 7 * * *", &cronJob{
@@ -80,7 +80,7 @@ func run(_ *cobra.Command, _ []string) {
 		tgChat: chat,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	c.Start()
@@ -93,6 +93,7 @@ func run(_ *cobra.Command, _ []string) {
 	termChan := make(chan os.Signal, 1)
 	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
 	<-termChan
+	return nil
 }
 
 type cronJob struct {
