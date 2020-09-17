@@ -1,11 +1,14 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	_ "net/http/pprof"
 
 	"github.com/spf13/cobra"
-	"github.com/stianeikeland/go-rpio/v4"
+	"periph.io/x/periph/conn/gpio"
+	"periph.io/x/periph/conn/gpio/gpioreg"
+	"periph.io/x/periph/host"
 )
 
 type lightAction int
@@ -46,24 +49,32 @@ func init() {
 	rootCmd.AddCommand(lightCmd)
 }
 
-func lightE(action lightAction) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		if err := rpio.Open(); err != nil {
-			return fmt.Errorf("unable to open gpio: %w", err)
+func lightE(action lightAction) func(_ *cobra.Command, _ []string) error {
+	return func(_ *cobra.Command, _ []string) error {
+		if _, err := host.Init(); err != nil {
+			return fmt.Errorf("periph.Init: %w", err)
 		}
-		defer rpio.Close()
 
-		pin := rpio.Pin(cfg.GPIOLightPin)
-		pin.Output()
+		pin := gpioreg.ByName(cfg.GPIOLightPin)
+		if pin == nil {
+			return errors.New("gpio pin is not present")
+		}
+
+		var lvl gpio.Level
 
 		switch action {
 		case actionOn:
-			pin.High()
+			lvl = gpio.High
 		case actionOff:
-			pin.Low()
+			lvl = gpio.Low
 		case actionToggle:
-			pin.Toggle()
+			lvl = !pin.Read()
 		}
+
+		if err := pin.Out(lvl); err != nil {
+			return fmt.Errorf("pin.Out: %w", err)
+		}
+
 		return nil
 	}
 }

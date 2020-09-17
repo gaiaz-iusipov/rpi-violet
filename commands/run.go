@@ -17,8 +17,10 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
-	"github.com/stianeikeland/go-rpio/v4"
 	tb "gopkg.in/tucnak/telebot.v2"
+	"periph.io/x/periph/conn/gpio"
+	"periph.io/x/periph/conn/gpio/gpioreg"
+	"periph.io/x/periph/host"
 )
 
 var runCmd = &cobra.Command{
@@ -34,7 +36,14 @@ func init() {
 }
 
 func runE(_ *cobra.Command, _ []string) error {
-	pin := rpio.Pin(cfg.GPIOLightPin)
+	if _, err := host.Init(); err != nil {
+		return fmt.Errorf("periph.Init: %w", err)
+	}
+
+	pin := gpioreg.ByName(cfg.GPIOLightPin)
+	if pin == nil {
+		return errors.New("gpio pin is not present")
+	}
 
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn: cfg.SentryDNS,
@@ -64,7 +73,7 @@ func runE(_ *cobra.Command, _ []string) error {
 
 	_, err = c.AddJob("@daily", &cronJob{
 		pin:    pin,
-		state:  rpio.Low,
+		state:  gpio.Low,
 		tgBot:  bot,
 		tgChat: chat,
 	})
@@ -74,7 +83,7 @@ func runE(_ *cobra.Command, _ []string) error {
 
 	_, err = c.AddJob("0 7 * * *", &cronJob{
 		pin:    pin,
-		state:  rpio.High,
+		state:  gpio.High,
 		tgBot:  bot,
 		tgChat: chat,
 	})
@@ -96,8 +105,8 @@ func runE(_ *cobra.Command, _ []string) error {
 }
 
 type cronJob struct {
-	pin    rpio.Pin
-	state  rpio.State
+	pin    gpio.PinIO
+	state  gpio.Level
 	tgBot  *tb.Bot
 	tgChat *tb.Chat
 }
@@ -109,13 +118,9 @@ func (cj cronJob) Run() {
 }
 
 func (cj cronJob) runE() error {
-	if err := rpio.Open(); err != nil {
-		return fmt.Errorf("unable to open gpio: %w", err)
+	if err := cj.pin.Out(cj.state); err != nil {
+		return fmt.Errorf("pin.Out: %w", err)
 	}
-	defer rpio.Close()
-
-	cj.pin.Output()
-	cj.pin.Write(cj.state)
 
 	reader, err := makePicture(context.Background())
 	if err != nil {

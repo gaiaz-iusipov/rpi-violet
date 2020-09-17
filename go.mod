@@ -8,6 +8,6 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.1
-	github.com/stianeikeland/go-rpio/v4 v4.4.0
-	gopkg.in/tucnak/telebot.v2 v2.3.3
+	gopkg.in/tucnak/telebot.v2 v2.3.4
+	periph.io/x/periph v3.6.4+incompatible
 )

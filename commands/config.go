@@ -15,7 +15,7 @@ type config struct {
 	TelegramBotToken      string
 	TelegramClientTimeout time.Duration
 	TelegramChatID        int64
-	GPIOLightPin          uint8
+	GPIOLightPin          string
 	RaspistillTimeout     time.Duration
 	SentryDNS             string
 	SentryTimeout         time.Duration
