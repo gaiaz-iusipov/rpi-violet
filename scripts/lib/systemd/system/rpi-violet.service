@@ -5,7 +5,6 @@ After=network.target
 
 [Service]
 Type=simple
-User=pi
 ExecStart=/usr/bin/rpi-violet run --config="/etc/rpi-violet.yaml"
 Restart=always
 RestartSec=5s
