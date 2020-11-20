@@ -142,11 +142,10 @@ func makePicture(ctx context.Context) (*bytes.Reader, error) {
 
 	out, err := cmd.Output()
 	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return nil, errors.New("timed out")
+		}
 		return nil, err
-	}
-
-	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-		return nil, errors.New("timed out")
 	}
 
 	return bytes.NewReader(out), nil
