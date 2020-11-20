@@ -46,7 +46,8 @@ func runE(_ *cobra.Command, _ []string) error {
 	}
 
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn: cfg.SentryDNS,
+		Dsn:     cfg.SentryDNS,
+		Release: "rpi-violet@" + version,
 	})
 	if err != nil {
 		return fmt.Errorf("sentry.Init: %w", err)
