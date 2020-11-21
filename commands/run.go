@@ -128,11 +128,14 @@ func (cj cronJob) runE() error {
 		return fmt.Errorf("failed to make photo: %w", err)
 	}
 
-	_, err = cj.tgBot.Send(cj.tgChat, &tb.Photo{File: tb.FromReader(reader)})
-	if err != nil {
-		return fmt.Errorf("bot.Send daily message: %w", err)
-	}
-	return nil
+	err = retry(10, 10*time.Second, func() error {
+		_, err := cj.tgBot.Send(cj.tgChat, &tb.Photo{File: tb.FromReader(reader)})
+		if err != nil {
+			return fmt.Errorf("bot.Send daily message: %w", err)
+		}
+		return nil
+	})
+	return err
 }
 
 func makePicture(ctx context.Context) (*bytes.Reader, error) {
@@ -150,4 +153,18 @@ func makePicture(ctx context.Context) (*bytes.Reader, error) {
 	}
 
 	return bytes.NewReader(out), nil
+}
+
+func retry(attempts int, delay time.Duration, fn func() error) (err error) {
+	for i := 1; ; i++ {
+		err = fn()
+		if err == nil {
+			return
+		}
+		if i == attempts {
+			break
+		}
+		time.Sleep(delay)
+	}
+	return fmt.Errorf("after %d attempts: %w", attempts, err)
 }
