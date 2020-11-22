@@ -156,15 +156,17 @@ func makePicture(ctx context.Context) (*bytes.Reader, error) {
 }
 
 func retry(attempts int, delay time.Duration, fn func() error) (err error) {
-	for i := 1; ; i++ {
+	if attempts < 1 {
+		return
+	}
+	for i := 0; i < attempts; i++ {
+		if i > 0 {
+			time.Sleep(delay)
+		}
 		err = fn()
 		if err == nil {
 			return
 		}
-		if i == attempts {
-			break
-		}
-		time.Sleep(delay)
 	}
 	return fmt.Errorf("after %d attempts: %w", attempts, err)
 }
