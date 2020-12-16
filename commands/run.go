@@ -127,9 +127,10 @@ func (cj cronJob) runE() error {
 	if err != nil {
 		return fmt.Errorf("failed to make photo: %w", err)
 	}
+	thPhoto := &tb.Photo{File: tb.FromReader(reader)}
 
 	err = retry(10, 10*time.Second, func() error {
-		_, err := cj.tgBot.Send(cj.tgChat, &tb.Photo{File: tb.FromReader(reader)})
+		_, err := cj.tgBot.Send(cj.tgChat, thPhoto)
 		if err != nil {
 			return fmt.Errorf("bot.Send daily message: %w", err)
 		}
