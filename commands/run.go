@@ -140,10 +140,19 @@ func (cj cronJob) runE() error {
 }
 
 func makePicture(ctx context.Context) (*bytes.Reader, error) {
+	rsOut, err := execRaspistill(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewReader(rsOut), nil
+}
+
+func execRaspistill(ctx context.Context) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, cfg.RaspistillTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "raspistill", "-o", "-")
+	cmd := exec.CommandContext(ctx, "raspistill", "-q", "85", "-o", "-")
 
 	out, err := cmd.Output()
 	if err != nil {
@@ -152,8 +161,7 @@ func makePicture(ctx context.Context) (*bytes.Reader, error) {
 		}
 		return nil, err
 	}
-
-	return bytes.NewReader(out), nil
+	return out, nil
 }
 
 func retry(attempts int, delay time.Duration, fn func() error) (err error) {
