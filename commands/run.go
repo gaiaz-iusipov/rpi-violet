@@ -123,13 +123,13 @@ func (cj cronJob) runE() error {
 		return fmt.Errorf("pin.Out: %w", err)
 	}
 
-	reader, err := makePicture(context.Background())
+	pic, err := makePicture(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to make photo: %w", err)
 	}
-	thPhoto := &tb.Photo{File: tb.FromReader(reader)}
 
 	err = retry(10, 10*time.Second, func() error {
+		thPhoto := &tb.Photo{File: tb.FromReader(bytes.NewReader(pic))}
 		_, err := cj.tgBot.Send(cj.tgChat, thPhoto)
 		if err != nil {
 			return fmt.Errorf("bot.Send daily message: %w", err)
@@ -139,16 +139,7 @@ func (cj cronJob) runE() error {
 	return err
 }
 
-func makePicture(ctx context.Context) (*bytes.Reader, error) {
-	rsOut, err := execRaspistill(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(rsOut), nil
-}
-
-func execRaspistill(ctx context.Context) ([]byte, error) {
+func makePicture(ctx context.Context) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, cfg.RaspistillTimeout)
 	defer cancel()
 
