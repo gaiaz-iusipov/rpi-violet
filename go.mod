@@ -9,5 +9,5 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.1
 	gopkg.in/tucnak/telebot.v2 v2.3.5
-	periph.io/x/periph v3.6.5+incompatible
+	periph.io/x/periph v3.6.6+incompatible
 )
