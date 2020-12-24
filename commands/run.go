@@ -114,7 +114,8 @@ type cronJob struct {
 
 func (cj cronJob) Run() {
 	if err := cj.runE(); err != nil {
-		sentry.CaptureException(err)
+		localHub := sentry.CurrentHub().Clone()
+		localHub.CaptureException(err)
 	}
 }
 
