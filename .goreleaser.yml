@@ -31,7 +31,9 @@ nfpms:
     dependencies:
       - libraspberrypi-bin
     bindir: /usr/bin
-    files:
-      "scripts/lib/systemd/system/**": "/lib/systemd/system"
-    config_files:
-      "config.dist.yaml": "/etc/rpi-violet.yaml"
+    contents:
+      - src: "scripts/lib/systemd/system/**"
+        dst: "/lib/systemd/system"
+      - src: "config.dist.yaml"
+        dst: "/etc/rpi-violet.yaml"
+        type: config
