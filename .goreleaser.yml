@@ -2,7 +2,8 @@ before:
   hooks:
     - go mod vendor
 builds:
-  - env:
+  - main: ./cmd/rpi-violet/main.go
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
