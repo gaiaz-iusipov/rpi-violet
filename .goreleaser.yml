@@ -12,9 +12,9 @@ builds:
       - 7
     ldflags:
       - -s -w
-      - -X github.com/gaiaz-iusipov/rpi-violet/commands.version={{.Version}}
-      - -X github.com/gaiaz-iusipov/rpi-violet/commands.commit={{.ShortCommit}}
-      - -X github.com/gaiaz-iusipov/rpi-violet/commands.date={{time "2006-01-02"}}
+      - -X github.com/gaiaz-iusipov/rpi-violet/pkg/version.version={{.Version}}
+      - -X github.com/gaiaz-iusipov/rpi-violet/pkg/version.commit={{.ShortCommit}}
+      - -X github.com/gaiaz-iusipov/rpi-violet/pkg/version.date={{time "2006-01-02"}}
 archives:
   - format: binary
 checksum:

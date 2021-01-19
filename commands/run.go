@@ -21,6 +21,8 @@ import (
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
+
+	"github.com/gaiaz-iusipov/rpi-violet/pkg/version"
 )
 
 var runCmd = &cobra.Command{
@@ -47,7 +49,7 @@ func runE(_ *cobra.Command, _ []string) error {
 
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:     cfg.SentryDNS,
-		Release: "rpi-violet@" + version,
+		Release: "rpi-violet@" + version.Version(),
 	})
 	if err != nil {
 		return fmt.Errorf("sentry.Init: %w", err)
