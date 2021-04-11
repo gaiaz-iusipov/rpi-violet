@@ -1,8 +1,0 @@
-telegramBotToken: ~
-telegramClientTimeout: 10s
-telegramChatID: ~
-gpioLightPin: ~
-raspistillTimeout: 10s
-sentryDNS: ~
-sentryTimeout: 2s
-debugPort: 6060

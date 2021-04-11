@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -33,49 +34,54 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
-	runCmd.Flags().StringVarP(&cfgFile, "config", "c", "config.yaml", "config file")
+	runCmd.Flags().StringVarP(&cfgFile, "config", "c", "config.toml", "config file")
 	rootCmd.AddCommand(runCmd)
 }
 
 func runE(_ *cobra.Command, _ []string) error {
 	var err error
-	cfg, err = config.Init(cfgFile)
+	cfg, err = config.New(cfgFile)
 	if err != nil {
-		return fmt.Errorf("config.Init: %w", err)
+		return fmt.Errorf("config.New: %w", err)
 	}
 
 	if _, err := host.Init(); err != nil {
 		return fmt.Errorf("periph.Init: %w", err)
 	}
 
-	pin := gpioreg.ByName(cfg.GPIOLightPin)
+	pin := gpioreg.ByName(cfg.GPIO.LightPin)
 	if pin == nil {
 		return errors.New("gpio pin is not present")
 	}
 
 	err = sentry.Init(sentry.ClientOptions{
-		Dsn:     cfg.SentryDNS,
+		Dsn:     cfg.Sentry.DNS,
 		Release: "rpi-violet@" + version.Version(),
 	})
 	if err != nil {
 		return fmt.Errorf("sentry.Init: %w", err)
 	}
-	defer sentry.Flush(cfg.SentryTimeout)
+	defer sentry.Flush(time.Duration(cfg.Sentry.Timeout))
 
 	tgClient := &http.Client{
-		Timeout: cfg.TelegramClientTimeout,
+		Timeout: time.Duration(cfg.Telegram.ClientTimeout),
 	}
 
 	bot, err := tb.NewBot(tb.Settings{
-		Token:  cfg.TelegramBotToken,
+		Token:  cfg.Telegram.BotToken,
 		Client: tgClient,
 	})
 	if err != nil {
 		return fmt.Errorf("tb.NewBot: %w", err)
 	}
 
-	chat := &tb.Chat{ID: cfg.TelegramChatID}
-	location, _ := time.LoadLocation("Europe/Moscow")
+	chat := &tb.Chat{ID: cfg.Telegram.ChatID}
+
+	location, err := time.LoadLocation(cfg.TimeZone)
+	if err != nil {
+		return fmt.Errorf("time.LoadLocation: %w", err)
+	}
+
 	c := cron.New(
 		cron.WithLocation(location),
 	)
@@ -104,7 +110,8 @@ func runE(_ *cobra.Command, _ []string) error {
 	defer c.Stop()
 
 	go func() {
-		log.Println(http.ListenAndServe("localhost:"+cfg.DebugPort, nil))
+		debugPort := strconv.Itoa(int(cfg.DebugPort))
+		log.Println(http.ListenAndServe("localhost:"+debugPort, nil))
 	}()
 
 	termChan := make(chan os.Signal, 1)
@@ -149,10 +156,11 @@ func (cj cronJob) runE() error {
 }
 
 func makePicture(ctx context.Context) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(ctx, cfg.RaspistillTimeout)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(cfg.Raspistill.Timeout))
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "raspistill", "-q", "85", "-o", "-")
+	strQuality := strconv.Itoa(int(cfg.Raspistill.JpegQuality))
+	cmd := exec.CommandContext(ctx, "raspistill", "-q", strQuality, "-o", "-")
 
 	out, err := cmd.Output()
 	if err != nil {

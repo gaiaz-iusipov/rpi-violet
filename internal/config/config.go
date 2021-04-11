@@ -1,32 +1,43 @@
 package config
 
 import (
-	"time"
-
-	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"github.com/go-playground/validator/v10"
 )
 
 type Config struct {
-	TelegramBotToken      string
-	TelegramClientTimeout time.Duration
-	TelegramChatID        int64
-	GPIOLightPin          string
-	RaspistillTimeout     time.Duration
-	SentryDNS             string
-	SentryTimeout         time.Duration
-	DebugPort             string
+	DebugPort uint16 `validate:"required"`
+	TimeZone  string `validate:"required"`
+	*Sentry
+	*GPIO
+	*Telegram
+	*Image
+}
+
+type Sentry struct {
+	DNS     string   `validate:"required,url"`
+	Timeout Duration `validate:"required"`
+}
+
+type GPIO struct {
+	LightPin string `validate:"required"`
+}
+
+type Telegram struct {
+	BotToken      string   `validate:"required"`
+	ChatID        int64    `validate:"required"`
+	ClientTimeout Duration `validate:"required"`
+}
+
+type Image struct {
+	*Raspistill
+}
+
+type Raspistill struct {
+	JpegQuality uint8    `validate:"min=1,max=100"`
+	Timeout     Duration `validate:"required"`
 }
 
 func (c *Config) validate() error {
-	return validation.ValidateStruct(c,
-		validation.Field(&c.TelegramBotToken, validation.Required),
-		validation.Field(&c.TelegramClientTimeout, validation.Required),
-		validation.Field(&c.TelegramChatID, validation.Required),
-		validation.Field(&c.GPIOLightPin, validation.Required),
-		validation.Field(&c.RaspistillTimeout, validation.Required),
-		validation.Field(&c.SentryDNS, validation.Required, is.URL),
-		validation.Field(&c.SentryTimeout, validation.Required),
-		validation.Field(&c.DebugPort, validation.Required),
-	)
+	v := validator.New()
+	return v.Struct(c)
 }

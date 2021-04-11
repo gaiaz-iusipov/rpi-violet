@@ -1,0 +1,18 @@
+debugPort = 6060
+timeZone = "Europe/Moscow"
+
+[sentry]
+# dns = ""
+timeout = "2s"
+
+[gpio]
+# lightPin = ""
+
+[telegram]
+# botToken = ""
+# chatId = 0
+clientTimeout = "10s"
+
+[image.raspistill]
+jpegQuality = 85
+timeout = "10s"

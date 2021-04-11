@@ -2,27 +2,25 @@ package config
 
 import (
 	"fmt"
-	"log"
+	"os"
 
-	"github.com/spf13/viper"
+	"github.com/naoina/toml"
 )
 
-func Init(cfgFile string) (*Config, error) {
-	viper.SetConfigFile(cfgFile)
-	viper.AutomaticEnv()
+func New(path string) (*Config, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open config file: %w", err)
+	}
+	defer f.Close()
 
-	log.Println("using config file:", viper.ConfigFileUsed())
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("unable to read config file: %w", err)
+	config := new(Config)
+	if err := toml.NewDecoder(f).Decode(config); err != nil {
+		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}
 
-	var cfg *Config
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("unable to decode into struct: %w", err)
-	}
-
-	if err := cfg.validate(); err != nil {
+	if err := config.validate(); err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)
 	}
-	return cfg, nil
+	return config, nil
 }
