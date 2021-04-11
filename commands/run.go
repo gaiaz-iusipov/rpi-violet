@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -18,12 +17,12 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
-	tb "gopkg.in/tucnak/telebot.v2"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
 
 	"github.com/gaiaz-iusipov/rpi-violet/internal/config"
+	"github.com/gaiaz-iusipov/rpi-violet/internal/telegram"
 	"github.com/gaiaz-iusipov/rpi-violet/pkg/version"
 )
 
@@ -63,19 +62,10 @@ func runE(_ *cobra.Command, _ []string) error {
 	}
 	defer sentry.Flush(time.Duration(cfg.Sentry.Timeout))
 
-	tgClient := &http.Client{
-		Timeout: time.Duration(cfg.Telegram.ClientTimeout),
-	}
-
-	bot, err := tb.NewBot(tb.Settings{
-		Token:  cfg.Telegram.BotToken,
-		Client: tgClient,
-	})
+	tg, err := telegram.New(cfg.Telegram)
 	if err != nil {
-		return fmt.Errorf("tb.NewBot: %w", err)
+		return fmt.Errorf("bot.New: %w", err)
 	}
-
-	chat := &tb.Chat{ID: cfg.Telegram.ChatID}
 
 	location, err := time.LoadLocation(cfg.TimeZone)
 	if err != nil {
@@ -87,20 +77,18 @@ func runE(_ *cobra.Command, _ []string) error {
 	)
 
 	_, err = c.AddJob("@daily", &cronJob{
-		pin:    pin,
-		state:  gpio.Low,
-		tgBot:  bot,
-		tgChat: chat,
+		pin:         pin,
+		state:       gpio.Low,
+		photoSender: tg,
 	})
 	if err != nil {
 		return err
 	}
 
 	_, err = c.AddJob("0 7 * * *", &cronJob{
-		pin:    pin,
-		state:  gpio.High,
-		tgBot:  bot,
-		tgChat: chat,
+		pin:         pin,
+		state:       gpio.High,
+		photoSender: tg,
 	})
 	if err != nil {
 		return err
@@ -120,11 +108,14 @@ func runE(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
+type PhotoSender interface {
+	SendPhoto(context.Context, []byte) error
+}
+
 type cronJob struct {
-	pin    gpio.PinIO
-	state  gpio.Level
-	tgBot  *tb.Bot
-	tgChat *tb.Chat
+	pin         gpio.PinIO
+	state       gpio.Level
+	photoSender PhotoSender
 }
 
 func (cj cronJob) Run() {
@@ -139,20 +130,18 @@ func (cj cronJob) runE() error {
 		return fmt.Errorf("pin.Out: %w", err)
 	}
 
-	pic, err := makePicture(context.Background())
+	ctx := context.Background()
+
+	pic, err := makePicture(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to make photo: %w", err)
 	}
 
-	err = retry(10, 10*time.Second, func() error {
-		thPhoto := &tb.Photo{File: tb.FromReader(bytes.NewReader(pic))}
-		_, err := cj.tgBot.Send(cj.tgChat, thPhoto)
-		if err != nil {
-			return fmt.Errorf("bot.Send daily message: %w", err)
-		}
-		return nil
-	})
-	return err
+	err = cj.photoSender.SendPhoto(ctx, pic)
+	if err != nil {
+		return fmt.Errorf("failed to send photo: %w", err)
+	}
+	return nil
 }
 
 func makePicture(ctx context.Context) ([]byte, error) {
@@ -170,20 +159,4 @@ func makePicture(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 	return out, nil
-}
-
-func retry(attempts int, delay time.Duration, fn func() error) (err error) {
-	if attempts < 1 {
-		return
-	}
-	for i := 0; i < attempts; i++ {
-		if i > 0 {
-			time.Sleep(delay)
-		}
-		err = fn()
-		if err == nil {
-			return
-		}
-	}
-	return fmt.Errorf("after %d attempts: %w", attempts, err)
 }
