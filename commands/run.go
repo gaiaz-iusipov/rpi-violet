@@ -22,14 +22,14 @@ import (
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
 
+	"github.com/gaiaz-iusipov/rpi-violet/internal/config"
 	"github.com/gaiaz-iusipov/rpi-violet/pkg/version"
 )
 
 var runCmd = &cobra.Command{
-	Use:     "run",
-	Short:   "Run application",
-	PreRunE: initConfig,
-	RunE:    runE,
+	Use:   "run",
+	Short: "Run application",
+	RunE:  runE,
 }
 
 func init() {
@@ -38,6 +38,12 @@ func init() {
 }
 
 func runE(_ *cobra.Command, _ []string) error {
+	var err error
+	cfg, err = config.Init(cfgFile)
+	if err != nil {
+		return fmt.Errorf("config.Init: %w", err)
+	}
+
 	if _, err := host.Init(); err != nil {
 		return fmt.Errorf("periph.Init: %w", err)
 	}
@@ -47,7 +53,7 @@ func runE(_ *cobra.Command, _ []string) error {
 		return errors.New("gpio pin is not present")
 	}
 
-	err := sentry.Init(sentry.ClientOptions{
+	err = sentry.Init(sentry.ClientOptions{
 		Dsn:     cfg.SentryDNS,
 		Release: "rpi-violet@" + version.Version(),
 	})
