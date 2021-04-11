@@ -8,7 +8,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"os/exec"
 	"os/signal"
 	"strconv"
 	"syscall"
@@ -22,6 +21,7 @@ import (
 	"periph.io/x/periph/host"
 
 	"github.com/gaiaz-iusipov/rpi-violet/internal/config"
+	"github.com/gaiaz-iusipov/rpi-violet/internal/raspistill"
 	"github.com/gaiaz-iusipov/rpi-violet/internal/telegram"
 	"github.com/gaiaz-iusipov/rpi-violet/pkg/version"
 )
@@ -67,6 +67,8 @@ func runE(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("bot.New: %w", err)
 	}
 
+	rs := raspistill.New(cfg.Raspistill)
+
 	location, err := time.LoadLocation(cfg.TimeZone)
 	if err != nil {
 		return fmt.Errorf("time.LoadLocation: %w", err)
@@ -77,18 +79,20 @@ func runE(_ *cobra.Command, _ []string) error {
 	)
 
 	_, err = c.AddJob("@daily", &cronJob{
-		pin:         pin,
-		state:       gpio.Low,
-		photoSender: tg,
+		pin:           pin,
+		state:         gpio.Low,
+		photoProvider: rs,
+		photoSender:   tg,
 	})
 	if err != nil {
 		return err
 	}
 
 	_, err = c.AddJob("0 7 * * *", &cronJob{
-		pin:         pin,
-		state:       gpio.High,
-		photoSender: tg,
+		pin:           pin,
+		state:         gpio.High,
+		photoProvider: rs,
+		photoSender:   tg,
 	})
 	if err != nil {
 		return err
@@ -108,14 +112,19 @@ func runE(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
+type PhotoProvider interface {
+	GetPhoto(context.Context) ([]byte, error)
+}
+
 type PhotoSender interface {
 	SendPhoto(context.Context, []byte) error
 }
 
 type cronJob struct {
-	pin         gpio.PinIO
-	state       gpio.Level
-	photoSender PhotoSender
+	pin           gpio.PinIO
+	state         gpio.Level
+	photoProvider PhotoProvider
+	photoSender   PhotoSender
 }
 
 func (cj cronJob) Run() {
@@ -132,31 +141,14 @@ func (cj cronJob) runE() error {
 
 	ctx := context.Background()
 
-	pic, err := makePicture(ctx)
+	photo, err := cj.photoProvider.GetPhoto(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to make photo: %w", err)
+		return fmt.Errorf("failed to get photo: %w", err)
 	}
 
-	err = cj.photoSender.SendPhoto(ctx, pic)
+	err = cj.photoSender.SendPhoto(ctx, photo)
 	if err != nil {
 		return fmt.Errorf("failed to send photo: %w", err)
 	}
 	return nil
-}
-
-func makePicture(ctx context.Context) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(cfg.Raspistill.Timeout))
-	defer cancel()
-
-	strQuality := strconv.Itoa(int(cfg.Raspistill.JpegQuality))
-	cmd := exec.CommandContext(ctx, "raspistill", "-q", strQuality, "-o", "-")
-
-	out, err := cmd.Output()
-	if err != nil {
-		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			return nil, errors.New("timed out")
-		}
-		return nil, err
-	}
-	return out, nil
 }

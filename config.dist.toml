@@ -13,6 +13,6 @@ timeout = "2s"
 # chatId = 0
 clientTimeout = "10s"
 
-[image.raspistill]
-jpegQuality = 85
+[raspistill]
+quality = 85
 timeout = "10s"

@@ -10,7 +10,7 @@ type Config struct {
 	*Sentry
 	*GPIO
 	*Telegram
-	*Image
+	*Raspistill
 }
 
 type Sentry struct {
@@ -28,13 +28,9 @@ type Telegram struct {
 	ClientTimeout Duration `validate:"required"`
 }
 
-type Image struct {
-	*Raspistill
-}
-
 type Raspistill struct {
-	JpegQuality uint8    `validate:"min=1,max=100"`
-	Timeout     Duration `validate:"required"`
+	Quality uint8    `validate:"min=1,max=100"`
+	Timeout Duration `validate:"required"`
 }
 
 func (c *Config) validate() error {
