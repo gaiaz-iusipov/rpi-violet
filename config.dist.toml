@@ -16,3 +16,20 @@ clientTimeout = "10s"
 [raspistill]
 quality = 85
 timeout = "10s"
+
+[[cron.jobs]]
+spec = "0 7 * * *"
+withLightSwitch = true
+lightState = true
+withPhoto = true
+
+[[cron.jobs]]
+spec = "0 22 * * *"
+withLightSwitch = true
+lightState = false
+withPhoto = false
+
+[[cron.jobs]]
+spec = "@daily"
+withLightSwitch = false
+withPhoto = true

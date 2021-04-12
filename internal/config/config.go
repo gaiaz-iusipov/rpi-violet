@@ -11,6 +11,7 @@ type Config struct {
 	*GPIO
 	*Telegram
 	*Raspistill
+	*Cron
 }
 
 type Sentry struct {
@@ -36,4 +37,15 @@ type Raspistill struct {
 func (c *Config) validate() error {
 	v := validator.New()
 	return v.Struct(c)
+}
+
+type Cron struct {
+	Jobs []*CronJob
+}
+
+type CronJob struct {
+	Spec            string `validate:"required"`
+	WithLightSwitch bool
+	LightState      bool
+	WithPhoto       bool
 }
