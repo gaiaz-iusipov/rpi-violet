@@ -34,6 +34,6 @@ nfpms:
     contents:
       - src: "scripts/lib/systemd/system/**"
         dst: "/lib/systemd/system"
-      - src: "config.dist.yaml"
-        dst: "/etc/rpi-violet.yaml"
+      - src: "config.dist.toml"
+        dst: "/etc/rpi-violet.toml"
         type: config

@@ -6,7 +6,7 @@
 
 ```shell
 sudo apt install ./rpi-violet.deb
-sudo nano /etc/rpi-violet.yaml
+sudo nano /etc/rpi-violet.toml
 sudo systemctl start rpi-violet
 systemctl status rpi-violet
 sudo systemctl enable rpi-violet
