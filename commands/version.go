@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/gaiaz-iusipov/rpi-violet/pkg/version"
+	"github.com/gaiaz-iusipov/rpi-violet/internal/version"
 )
 
 var versionCmd = &cobra.Command{

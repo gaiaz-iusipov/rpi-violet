@@ -21,7 +21,7 @@ import (
 	"github.com/gaiaz-iusipov/rpi-violet/internal/cron"
 	"github.com/gaiaz-iusipov/rpi-violet/internal/raspistill"
 	"github.com/gaiaz-iusipov/rpi-violet/internal/telegram"
-	"github.com/gaiaz-iusipov/rpi-violet/pkg/version"
+	"github.com/gaiaz-iusipov/rpi-violet/internal/version"
 )
 
 var runCmd = &cobra.Command{
