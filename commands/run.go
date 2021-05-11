@@ -30,14 +30,15 @@ var runCmd = &cobra.Command{
 	RunE:  runE,
 }
 
+var cfgFile string
+
 func init() {
 	runCmd.Flags().StringVarP(&cfgFile, "config", "c", "config.toml", "config file")
 	rootCmd.AddCommand(runCmd)
 }
 
 func runE(_ *cobra.Command, _ []string) error {
-	var err error
-	cfg, err = config.New(cfgFile)
+	cfg, err := config.New(cfgFile)
 	if err != nil {
 		return fmt.Errorf("config.New: %w", err)
 	}
