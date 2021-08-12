@@ -11,14 +11,21 @@ import (
 )
 
 type job struct {
+	sentryHub     *sentry.Hub
 	cfg           *config.CronJob
 	pin           gpio.PinIO
 	photoProvider PhotoProvider
 	photoSender   PhotoSender
 }
 
-func newJob(cfg *config.CronJob, pin gpio.PinIO, photoProvider PhotoProvider, photoSender PhotoSender) (string, *job) {
-	return cfg.Spec, &job{
+func newJob(cfg *config.CronJob, pin gpio.PinIO, photoProvider PhotoProvider, photoSender PhotoSender) *job {
+	sentryHub := sentry.CurrentHub().Clone()
+	sentryHub.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetTag("cronJobSpec", cfg.Spec)
+	})
+
+	return &job{
+		sentryHub:     sentryHub,
 		cfg:           cfg,
 		pin:           pin,
 		photoProvider: photoProvider,
@@ -26,30 +33,29 @@ func newJob(cfg *config.CronJob, pin gpio.PinIO, photoProvider PhotoProvider, ph
 	}
 }
 
-func (cj *job) Run() {
-	if err := cj.runE(); err != nil {
-		localHub := sentry.CurrentHub().Clone()
-		localHub.CaptureException(err)
+func (j *job) Run() {
+	if err := j.runE(); err != nil {
+		j.sentryHub.CaptureException(err)
 	}
 }
 
-func (cj *job) runE() error {
-	if cj.cfg.WithLightSwitch {
-		pinLvl := gpio.Level(cj.cfg.LightState)
-		if err := cj.pin.Out(pinLvl); err != nil {
+func (j *job) runE() error {
+	if j.cfg.WithLightSwitch {
+		pinLvl := gpio.Level(j.cfg.LightState)
+		if err := j.pin.Out(pinLvl); err != nil {
 			return fmt.Errorf("pin.Out: %w", err)
 		}
 	}
 
-	if cj.cfg.WithPhoto {
+	if j.cfg.WithPhoto {
 		ctx := context.Background()
 
-		photo, err := cj.photoProvider.GetPhoto(ctx)
+		photo, err := j.photoProvider.GetPhoto(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get photo: %w", err)
 		}
 
-		err = cj.photoSender.SendPhoto(ctx, photo)
+		err = j.photoSender.SendPhoto(ctx, photo)
 		if err != nil {
 			return fmt.Errorf("failed to send photo: %w", err)
 		}

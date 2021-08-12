@@ -29,7 +29,7 @@ func New(cfg *config.Cron, loc *time.Location, pin gpio.PinIO, photoProvider Pho
 	)
 
 	for _, jobCfg := range cfg.Jobs {
-		_, err := c.AddJob(newJob(jobCfg, pin, photoProvider, photoSender))
+		_, err := c.AddJob(jobCfg.Spec, newJob(jobCfg, pin, photoProvider, photoSender))
 		if err != nil {
 			return nil, fmt.Errorf("c.AddJob: %w", err)
 		}
