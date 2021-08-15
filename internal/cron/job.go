@@ -11,25 +11,33 @@ import (
 )
 
 type job struct {
-	sentryHub     *sentry.Hub
-	cfg           *config.CronJob
-	pin           gpio.PinIO
-	photoProvider PhotoProvider
-	photoSender   PhotoSender
+	sentryHub            *sentry.Hub
+	cfg                  *config.CronJob
+	pin                  gpio.PinIO
+	photoProvider        PhotoProvider
+	photoSender          PhotoSender
+	measurementsProvider MeasurementsProvider
 }
 
-func newJob(cfg *config.CronJob, pin gpio.PinIO, photoProvider PhotoProvider, photoSender PhotoSender) *job {
+func newJob(
+	cfg *config.CronJob,
+	pin gpio.PinIO,
+	photoProvider PhotoProvider,
+	photoSender PhotoSender,
+	measurementsProvider MeasurementsProvider,
+) *job {
 	sentryHub := sentry.CurrentHub().Clone()
 	sentryHub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetTag("cronJobSpec", cfg.Spec)
 	})
 
 	return &job{
-		sentryHub:     sentryHub,
-		cfg:           cfg,
-		pin:           pin,
-		photoProvider: photoProvider,
-		photoSender:   photoSender,
+		sentryHub:            sentryHub,
+		cfg:                  cfg,
+		pin:                  pin,
+		photoProvider:        photoProvider,
+		photoSender:          photoSender,
+		measurementsProvider: measurementsProvider,
 	}
 }
 
@@ -55,7 +63,9 @@ func (j *job) runE() error {
 			return fmt.Errorf("failed to get photo: %w", err)
 		}
 
-		err = j.photoSender.SendPhoto(ctx, photo)
+		caption, _ := j.measurementsProvider.Measurements()
+
+		err = j.photoSender.SendPhoto(ctx, photo, caption)
 		if err != nil {
 			return fmt.Errorf("failed to send photo: %w", err)
 		}

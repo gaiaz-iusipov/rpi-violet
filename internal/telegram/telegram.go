@@ -37,9 +37,13 @@ func New(cfg *config.Telegram) (*Telegram, error) {
 	}, nil
 }
 
-func (t *Telegram) SendPhoto(_ context.Context, photo []byte) error {
+func (t *Telegram) SendPhoto(_ context.Context, photo []byte, caption string) error {
 	return retry(10, 10*time.Second, func() error {
-		thPhoto := &tb.Photo{File: tb.FromReader(bytes.NewReader(photo))}
+		thPhoto := &tb.Photo{
+			File:    tb.FromReader(bytes.NewReader(photo)),
+			Caption: caption,
+		}
+
 		_, err := t.bot.Send(t.chat, thPhoto)
 		if err != nil {
 			return fmt.Errorf("bot.Send: %w", err)

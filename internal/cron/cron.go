@@ -16,20 +16,31 @@ type Cron struct {
 }
 
 type PhotoProvider interface {
-	GetPhoto(context.Context) ([]byte, error)
+	GetPhoto(ctx context.Context) ([]byte, error)
+}
+
+type MeasurementsProvider interface {
+	Measurements() (string, bool)
 }
 
 type PhotoSender interface {
-	SendPhoto(context.Context, []byte) error
+	SendPhoto(ctx context.Context, photo []byte, caption string) error
 }
 
-func New(cfg *config.Cron, loc *time.Location, pin gpio.PinIO, photoProvider PhotoProvider, photoSender PhotoSender) (*Cron, error) {
+func New(
+	cfg *config.Cron,
+	loc *time.Location,
+	pin gpio.PinIO,
+	photoProvider PhotoProvider,
+	photoSender PhotoSender,
+	measurementsProvider MeasurementsProvider,
+) (*Cron, error) {
 	c := cron.New(
 		cron.WithLocation(loc),
 	)
 
 	for _, jobCfg := range cfg.Jobs {
-		_, err := c.AddJob(jobCfg.Spec, newJob(jobCfg, pin, photoProvider, photoSender))
+		_, err := c.AddJob(jobCfg.Spec, newJob(jobCfg, pin, photoProvider, photoSender, measurementsProvider))
 		if err != nil {
 			return nil, fmt.Errorf("c.AddJob: %w", err)
 		}

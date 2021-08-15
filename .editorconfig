@@ -8,3 +8,7 @@ trim_trailing_whitespace = true
 
 [*.go]
 indent_style = tab
+ij_go_add_leading_space_to_comments = true
+
+[{*.yaml,*.yml}]
+ij_yaml_spaces_within_brackets = false

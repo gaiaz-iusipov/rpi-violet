@@ -34,6 +34,8 @@ nfpms:
     contents:
       - src: "scripts/lib/systemd/system/**"
         dst: "/lib/systemd/system"
+      - src: "scripts/etc/udev/rules.d/**"
+        dst: "/etc/udev/rules.d"
       - src: "config.dist.toml"
         dst: "/etc/rpi-violet.toml"
         type: config
