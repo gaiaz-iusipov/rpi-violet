@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/getsentry/sentry-go"
-	"periph.io/x/periph/conn/gpio"
+	"periph.io/x/conn/v3/gpio"
 
 	"github.com/gaiaz-iusipov/rpi-violet/internal/config"
 )
