@@ -14,8 +14,8 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/spf13/cobra"
-	"periph.io/x/periph/conn/gpio/gpioreg"
-	"periph.io/x/periph/host"
+	"periph.io/x/conn/v3/gpio/gpioreg"
+	"periph.io/x/host/v3"
 
 	"github.com/gaiaz-iusipov/rpi-violet/internal/config"
 	"github.com/gaiaz-iusipov/rpi-violet/internal/cron"
@@ -43,7 +43,8 @@ func runE(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("config.New: %w", err)
 	}
 
-	if _, err := host.Init(); err != nil {
+	_, err = host.Init()
+	if err != nil {
 		return fmt.Errorf("periph.Init: %w", err)
 	}
 
