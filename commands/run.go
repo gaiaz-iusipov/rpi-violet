@@ -18,6 +18,8 @@ import (
 
 	"github.com/gaiaz-iusipov/rpi-violet/internal/config"
 	"github.com/gaiaz-iusipov/rpi-violet/internal/cron"
+	"github.com/gaiaz-iusipov/rpi-violet/internal/monitor"
+	"github.com/gaiaz-iusipov/rpi-violet/internal/monitor/co2mon"
 	"github.com/gaiaz-iusipov/rpi-violet/internal/raspistill"
 	"github.com/gaiaz-iusipov/rpi-violet/internal/telegram"
 	"github.com/gaiaz-iusipov/rpi-violet/internal/version"
@@ -73,7 +75,16 @@ func runE(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("time.LoadLocation: %w", err)
 	}
 
-	c, err := cron.New(cfg.Cron, location, pin, rs, tg)
+	co2monDev, err := co2mon.Open(co2mon.WithRandomKey())
+	if err != nil {
+		return fmt.Errorf("co2mon.Open(): %w", err)
+	}
+	defer co2monDev.Close()
+
+	mon := monitor.New(co2monDev)
+	defer mon.Close()
+
+	c, err := cron.New(cfg.Cron, location, pin, rs, tg, mon)
 	if err != nil {
 		return fmt.Errorf("cron.New: %w", err)
 	}

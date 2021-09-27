@@ -7,6 +7,7 @@
 
 ```shell
 sudo apt install ./rpi-violet.deb
+sudo udevadm trigger
 sudo nano /etc/rpi-violet.toml
 sudo systemctl start rpi-violet
 systemctl status rpi-violet

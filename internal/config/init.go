@@ -15,11 +15,13 @@ func New(path string) (*Config, error) {
 	defer f.Close()
 
 	config := new(Config)
-	if err := toml.NewDecoder(f).Decode(config); err != nil {
+	err = toml.NewDecoder(f).Decode(config)
+	if err != nil {
 		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}
 
-	if err := config.validate(); err != nil {
+	err = config.validate()
+	if err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 	return config, nil
