@@ -1,6 +1,6 @@
 module github.com/gaiaz-iusipov/rpi-violet
 
-go 1.15
+go 1.17
 
 require (
 	github.com/getsentry/sentry-go v0.11.0
@@ -13,4 +13,17 @@ require (
 	gopkg.in/tucnak/telebot.v2 v2.4.0
 	periph.io/x/conn/v3 v3.6.8
 	periph.io/x/host/v3 v3.7.0
+)
+
+require (
+	github.com/go-playground/locales v0.14.0 // indirect
+	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/pkg/errors v0.8.1 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
+	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect
+	golang.org/x/text v0.3.6 // indirect
+	periph.io/x/d2xx v0.0.1 // indirect
 )
