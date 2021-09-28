@@ -81,7 +81,10 @@ func runE(_ *cobra.Command, _ []string) error {
 	}
 	defer co2monDev.Close()
 
-	mon := monitor.New(co2monDev)
+	mon, err := monitor.New(monitor.WithDevOptions(co2mon.WithRandomKey()))
+	if err != nil {
+		return fmt.Errorf("monitor.New(): %w", err)
+	}
 	defer mon.Close()
 
 	c, err := cron.New(cfg.Cron, location, pin, rs, tg, mon)

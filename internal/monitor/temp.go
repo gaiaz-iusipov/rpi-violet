@@ -46,7 +46,7 @@ func (t *temp) getCelsius() (float64, bool) {
 
 func (t *temp) String() string {
 	if val, ok := t.getCelsius(); ok {
-		return fmt.Sprintf("%.4f °C", val)
+		return fmt.Sprintf("%.1f °C", val)
 	}
 	return ""
 }
