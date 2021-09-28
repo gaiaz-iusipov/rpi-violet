@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -10,30 +11,36 @@ import (
 
 // Monitor is a USB CO2 monitor
 type Monitor struct {
-	dev       *co2mon.Device
-	readDelay time.Duration
-	co2       *co2
-	temp      *temp
-	done      chan struct{}
+	opts         *options
+	co2          *co2
+	temp         *temp
+	done         chan struct{}
+	readErrCount int
+	dev          *co2mon.Device
 }
 
-func New(dev *co2mon.Device, setters ...OptionSetter) *Monitor {
+func New(setters ...OptionSetter) (*Monitor, error) {
 	opts := newOptions(setters)
 
 	monitor := &Monitor{
-		dev:       dev,
-		readDelay: opts.readDelay,
-		temp:      &temp{ttl: opts.co2TTL},
-		co2:       &co2{ttl: opts.co2TTL},
-		done:      make(chan struct{}),
+		opts: opts,
+		temp: &temp{ttl: opts.co2TTL},
+		co2:  &co2{ttl: opts.co2TTL},
+		done: make(chan struct{}),
+	}
+
+	if err := monitor.initDev(); err != nil {
+		return nil, err
 	}
 
 	go monitor.run()
-	return monitor
+
+	return monitor, nil
 }
 
 func (m *Monitor) Close() error {
 	close(m.done)
+	_ = m.dev.Close()
 	return nil
 }
 
@@ -54,8 +61,17 @@ func (m *Monitor) Measurements() (string, bool) {
 	return strings.Join(parts, ", "), true
 }
 
+func (m *Monitor) initDev() error {
+	dev, err := co2mon.Open(m.opts.devOpts...)
+	if err != nil {
+		return fmt.Errorf("co2mon.Open(): %w", err)
+	}
+	m.dev = dev
+	return nil
+}
+
 func (m *Monitor) run() {
-	ticker := time.NewTicker(m.readDelay)
+	ticker := time.NewTicker(m.opts.readDelay)
 	defer ticker.Stop()
 
 	for {
@@ -66,6 +82,22 @@ func (m *Monitor) run() {
 			pack, err := m.dev.ReadPacket()
 			if err != nil {
 				log.Println(err)
+				m.readErrCount++
+
+				if m.readErrCount > m.opts.readErrThreshold {
+					err = m.dev.Close()
+					if err != nil {
+						log.Println(err)
+					}
+
+					err = m.initDev()
+					if err != nil {
+						log.Println(err)
+					} else {
+						m.readErrCount = 0
+					}
+				}
+
 				continue
 			}
 

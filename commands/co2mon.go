@@ -10,19 +10,15 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/gaiaz-iusipov/rpi-violet/internal/monitor"
-	"github.com/gaiaz-iusipov/rpi-violet/internal/monitor/co2mon"
 )
 
 var co2monCmd = &cobra.Command{
 	Use: "co2mon",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dev, err := co2mon.Open(co2mon.WithRandomKey())
+		mon, err := monitor.New()
 		if err != nil {
-			return fmt.Errorf("co2mon.Open(): %w", err)
+			return fmt.Errorf("monitor.New(): %w", err)
 		}
-		defer dev.Close()
-
-		mon := monitor.New(dev)
 		defer mon.Close()
 
 		done := make(chan struct{})
