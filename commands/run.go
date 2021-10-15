@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"periph.io/x/conn/v3/gpio/gpioreg"
 	"periph.io/x/host/v3"
@@ -93,9 +93,10 @@ func runE(_ *cobra.Command, _ []string) error {
 	}
 	defer c.Stop()
 
+	http.Handle("/metrics", promhttp.Handler())
 	go func() {
-		debugPort := strconv.Itoa(int(cfg.DebugPort))
-		log.Println(http.ListenAndServe("localhost:"+debugPort, nil))
+		addr := fmt.Sprintf("0.0.0.0:%d", cfg.DebugPort)
+		log.Println(http.ListenAndServe(addr, nil))
 	}()
 
 	termChan := make(chan os.Signal, 1)
