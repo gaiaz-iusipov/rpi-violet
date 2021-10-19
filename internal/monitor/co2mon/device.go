@@ -57,7 +57,7 @@ func (d *Device) ReadPacket() (*Packet, error) {
 		// If the "magic byte" is present no decryption is necessary.
 		// This is the case for AIRCO2NTROL COACH and newer AIRCO2NTROL MINIs in general.
 		if data[4] != 0x0d && !d.opts.withoutDecrypt {
-			data = decrypt(data, d.opts.key)
+			data = Decrypt(data, d.opts.key)
 		}
 
 		err = validate(data)
