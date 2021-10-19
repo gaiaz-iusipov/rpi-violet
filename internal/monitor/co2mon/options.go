@@ -49,7 +49,7 @@ func WithRandomKey() OptionSetter {
 	}
 }
 
-// WithoutDecrypt disables data decrypt.
+// WithoutDecrypt disables data Decrypt.
 func WithoutDecrypt() OptionSetter {
 	return func(opts *options) {
 		opts.withoutDecrypt = true

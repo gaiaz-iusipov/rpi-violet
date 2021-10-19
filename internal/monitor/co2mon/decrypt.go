@@ -5,11 +5,12 @@ import (
 	"fmt"
 )
 
-func decrypt(data, key [8]byte) [8]byte {
+func Decrypt(data, key [8]byte) [8]byte {
 	data = phase1(data)
 	data = phase2(data, key)
 	data = phase3(data)
 	data = phase4(data)
+
 	return data
 }
 
