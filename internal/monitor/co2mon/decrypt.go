@@ -10,7 +10,6 @@ func Decrypt(data, key [8]byte) [8]byte {
 	data = phase2(data, key)
 	data = phase3(data)
 	data = phase4(data)
-
 	return data
 }
 
